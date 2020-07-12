@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://ethereum-api.xyz',
+  baseURL: 'https://ropsten.infura.io',
   timeout: 30000, // 30 secs
   headers: {
     Accept: 'application/json',
@@ -9,10 +9,13 @@ const api = axios.create({
   },
 });
 
-export async function apiGetAccountAssets(address, chainId) {
-  const response = await api.get(
-    `/account-assets?address=${address}&chainId=${chainId}`
-  );
+export async function apiGetAccountAssets(address) {
+  const response = await api.post(`/v3/57e4a16cfc0e46d9aa036d2d0b5dbdba`, {
+    jsonrpc: '2.0',
+    method: 'eth_getBalance',
+    params: [address, 'latest'],
+    id: 1,
+  });
   const { result } = response.data;
   return result;
 }

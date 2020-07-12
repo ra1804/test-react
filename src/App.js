@@ -6,12 +6,14 @@ import { apiGetAccountAssets } from './utils/api';
 
 const { Header, Footer, Sider, Content } = Layout;
 const { Text, Link } = Typography;
+const UPDATE_TIME = 5000;
 
 const initWaletState = {
   connected: false,
   chainId: '',
   accounts: [],
   address: '',
+  balanceEth: 0,
 };
 
 export default function App() {
@@ -85,10 +87,26 @@ export default function App() {
 
   useEffect(() => {
     if (walletState.address && walletState.chainId) {
-      apiGetAccountAssets(
-        walletState.address,
-        walletState.chainId
-      ).then((res) => console.log(res));
+      let timerId = setTimeout(async function tick() {
+        const result = await apiGetAccountAssets(
+          walletState.address,
+          walletState.chainId
+        );
+        console.log(result);
+        timerId = setTimeout(tick, UPDATE_TIME); // (*)
+      }, UPDATE_TIME);
+
+      apiGetAccountAssets(walletState.address, walletState.chainId).then(
+        (res) => {
+          let ethBal = parseInt(res, 16);
+          ethBal = ethBal * Math.pow(10, -18);
+          console.log('Eth balance = ' + ethBal);
+          handleWalletState({
+            ...walletState,
+            balanceEth: ethBal,
+          });
+        }
+      );
     }
   }, [walletState.address, walletState.chainId]);
 
@@ -110,9 +128,14 @@ export default function App() {
       </Header>
       <Content>
         {!walletState.connected && (
-          <Button type='primary' onClick={() => createSessionWallet()}>
+          <Button type="primary" onClick={() => createSessionWallet()}>
             Create session
           </Button>
+        )}
+        {walletState.balanceEth && (
+          <Text strong style={{ color: '#000' }}>
+            {`Balance ETH: ${walletState.balanceEth}`}
+          </Text>
         )}
       </Content>
       <Footer>
